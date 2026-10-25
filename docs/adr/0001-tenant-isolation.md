@@ -1,6 +1,6 @@
 # ADR TF-0001: Shared database with tenant-aware access
 
-Status: proposed. Date: 2026-10-25.
+Status: accepted with the initial architecture approval. Date: 2026-10-25.
 Context: demonstrate secure isolation with a small operational footprint.
 Options: database per tenant; schema per tenant; shared schema with explicit tenant keys.
 Decision proposal: shared PostgreSQL schema, server membership checks and RLS as defense in depth. Use a restricted runtime role, transaction-local request context and tenant-aware constraints.

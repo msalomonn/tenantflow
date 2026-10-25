@@ -1,6 +1,6 @@
 # TF-01: Organization-scoped project access
 
-Status: proposed; initial MVP approval pending. Product requirements, not implementation evidence.
+Status: MVP scope approved by Manuel on 2026-10-25. Requirements are not implementation evidence.
 
 ## User outcome
 
@@ -37,6 +37,6 @@ The last owner cannot be removed or demoted. Membership changes apply on the nex
 
 TF-00 chooses and verifies identity integration. TF-01 then implements sign-in, two-tenant fixtures, create/list projects, and TF-A01 through TF-A05/TF-A09 for those operations. Full membership management and archive remain follow-up tasks. This narrow slice validates the workflow on real authorization behavior.
 
-## Initial proposal requiring review
+## Approved boundaries
 
-The role matrix, name limit and membership-without-email scope are proposed defaults. Identity provider remains an explicit TF-00 decision, not an assumption hidden in implementation.
+The role matrix, name limit and membership-without-email scope were approved on 2026-10-25. Identity provider remains an explicit TF-00 decision, not an assumption hidden in implementation.
