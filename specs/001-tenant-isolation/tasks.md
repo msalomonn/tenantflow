@@ -1,0 +1,31 @@
+# TenantFlow implementation decomposition
+
+These are planned tasks, not completion claims. GitHub Issues will own live status.
+
+| ID | Work | Depends on | Acceptance/evidence |
+| --- | --- | --- | --- |
+| TF-00 | Choose identity/session approach; scaffold React/Node and PostgreSQL; pin dependencies | Approved constitution/MVP | ADR, repeatable startup, session/CSRF test plan |
+| TF-01 | Authenticated organization/project create/list slice with isolation | TF-00 | TF-A01–A05 and A09 for initial routes, real DB + browser evidence |
+| TF-02 | Membership management and full role matrix | TF-01 | TF-A05, A07, A08; concurrent last-owner test |
+| TF-03 | Project edit/archive and complete UI states | TF-01 | TF-A03–A06, A09; tenant-switch cache test |
+| TF-04 | Integration/E2E hardening and CI | TF-02, TF-03 | All TF-A criteria mapped to checks, dependency scan reviewed |
+| TF-05 | Deploy, English docs, screenshots and demo | TF-04; hosting decision | Deployed smoke, no dev-auth mode, synthetic fixtures, release checklist |
+
+For TF-01, implement schema/migrations, request identity+membership boundary, create/list routes, UI, negative integration tests and E2E as small dependent changes. Do not start unrelated full-app features before verifying the slice.
+
+## Executable task checklist
+
+All unchecked. These steps refine the backlog; issue state remains authoritative. Target source paths are proposed and will be created during bootstrap.
+
+- [ ] T001 Record identity/session choice, CSRF protections and supported dependency versions in docs/adr/0002-identity.md; implement only after initial scope approval. [TF-00]
+- [ ] T002 Create reproducible web/API/database startup under apps/web, apps/api and db/migrations with root setup instructions and lockfile. Depends T001. [TF-00]
+- [ ] T003 Add users/organizations/memberships/projects migrations and restricted runtime role in db/migrations; use atomic organization+owner creation. Depends T002. [TF-A02,A08]
+- [ ] T004 Add valid-session and current-membership request boundary in apps/api/src/auth and apps/api/src/organizations; request context must be transaction-local. Depends T001,T003. [TF-A01,A04,A05]
+- [ ] T005 Implement organization/project create/list endpoints in apps/api/src/projects with tenant-aware queries and documented status codes. Depends T004. [TF-A02–A05]
+- [ ] T006 Add real PostgreSQL integration cases in tests/integration for foreign IDs, forged tenant context, viewer writes and pooled context reuse. Depends T005. [TF-A01–A05]
+- [ ] T007 Build sign-in, organization switcher and create/list UI in apps/web/src; clear tenant-scoped caches on switching. Depends T005. [TF-A03,A09]
+- [ ] T008 Add first-slice browser scenario in tests/e2e; record commit, commands, result and workflow findings in docs/checkpoints. Depends T006,T007. [TF-A09; ENG-02]
+- [ ] T009 Implement membership/role mutation with concurrent last-owner protection in apps/api/src/organizations and tests/integration. Depends T008. [TF-A05,A07,A08]
+- [ ] T010 Complete project rename/archive and UI states in apps/api/src/projects and apps/web/src with persistence tests. Depends T008. [TF-A03–A06,A09]
+- [ ] T011 Add application CI under .github/workflows and complete acceptance-to-test mapping in docs/verification.md. Depends T009,T010. [TF-04]
+- [ ] T012 Implement deployment setup and docs/demo.md after hosting decision; satisfy docs/release-checklist.md and capture deployed smoke. Depends T011. [TF-05]
