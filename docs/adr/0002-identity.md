@@ -10,7 +10,7 @@ The first slice needs real authentication that runs locally without a paid servi
 
 The library owns password hashing, signed session cookies and session persistence/revocation. Require passwords of at least 12 characters. Disable cookie-cached session state to observe persisted revocation immediately. Keep built-in authentication throttling enabled.
 
-Web and API share an origin. Mutations require the exact configured Origin and JSON; library security checks remain enabled. Cookies are HttpOnly, SameSite=Lax and Secure in production. No tokens in localStorage or development bypass. For this direct local server, a private rate-limit header is overwritten with the socket IP. A future reverse proxy needs an explicit trusted-proxy decision.
+Web and API share an origin. Mutations require the exact configured Origin and JSON; library security checks remain enabled. A shared JSON parser limits decoded bodies to 16 KiB before authentication, including chunked and compressed input. The pinned Node adapter accepts the parsed body; regression tests cover that integration. Cookies are HttpOnly, SameSite=Lax and Secure in production. No tokens in localStorage or development bypass. For this direct local server, a private rate-limit header is overwritten with the socket IP. A future reverse proxy needs an explicit trusted-proxy decision.
 
 Separate database roles serve migrations, authentication and application operations. The API refuses privileged runtime roles. Membership authorization is read on every request and does not depend on cached identity claims.
 

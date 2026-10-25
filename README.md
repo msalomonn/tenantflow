@@ -35,7 +35,7 @@ npm run check
 
 Stop an existing development server before the browser checks: Playwright owns port 4310 during the run. The checks type-check code, build the web bundle, run real-database integration tests and exercise Chromium at desktop and mobile sizes. Tests create synthetic accounts and organizations in the local database.
 
-Local results: **11 integration tests and 4 browser scenarios passed**, plus type checking and production web build. [Verification and limits](docs/verification.md) distinguish the initial slice from the complete MVP. CI runs the same commands on pull requests; see the PR for its independent result.
+Local results: **17 integration tests and 4 browser scenarios passed**, plus type checking and production web build. [Verification and limits](docs/verification.md) distinguish the initial slice from the complete MVP. CI runs the same commands on pull requests; see the PR for its independent result.
 
 ## Engineering records
 

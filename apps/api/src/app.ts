@@ -34,8 +34,10 @@ export function createApplication(config:Config) {
     }
     next();
   });
-  app.all('/api/auth/*splat',toNodeHandler(auth));
+  // Bound decoded JSON before any handler, including unauthenticated auth routes.
+  // The pinned Better Auth Node adapter accepts the already-consumed req.body.
   app.use(express.json({limit:'16kb'}));
+  app.all('/api/auth/*splat',toNodeHandler(auth));
   app.get('/api/health',async(_req,res)=>{ await dataPool.query('SELECT 1'); res.json({status:'ok'}); });
   app.use('/api',async(req,res,next)=>{
     const session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)});
