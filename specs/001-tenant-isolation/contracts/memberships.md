@@ -28,3 +28,7 @@ Functions have an empty search path, qualified relations and no PUBLIC execution
 Real Postgres checks cover every nonowner role, foreign organization/target, duplicate additions, self-demotion/removal, immediate revocation, denied direct table writes and simultaneous owner changes using distinct connections. Concurrent changes must leave at least one owner, with the losing attempt rejected after rechecking permissions/invariants.
 
 The workspace exposes a Members view. Owners get an add form, per-member role controls and removal confirmation; others get a clear owner-only state. Loading/errors are accessible. Changing organization unmounts the old member view and aborts its request. Pending mutations cannot be resubmitted. Tests exercise add → role change → remove, last-owner rejection and a delayed tenant-switch response in desktop/mobile browsers.
+
+### Mutation-error recovery — TF-A07/A08/A09, T009a
+
+When an unknown email or a concurrently removed target returns 404, refresh authoritative access and reload members automatically if the actor remains an owner. Show the mutation error and retain entered email so the owner can correct it; recovery must not require Refresh members or a page reload. Duplicate additions must also preserve the existing list. A refresh must never restore member details or management controls after the actor is demoted or removed. Keep loading failures distinct from the mutation error. Regression checks cover these outcomes in desktop/mobile browsers; confirmation assertions must tolerate a simultaneous loading status.

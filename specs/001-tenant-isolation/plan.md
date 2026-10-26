@@ -27,7 +27,7 @@ Use 401 for no valid session, 404 for resources outside accessible organizations
 
 ## Verification
 
-The full-MVP verification target is real PostgreSQL integration coverage for two users, two organizations and all roles. Attempt every read/write route with a foreign project ID, revoked membership, forged tenant context, pooled connection reuse and concurrent owner changes. The initial slice passes 29 integration cases and 8 browser scenarios; see [current evidence and remaining cases](../../docs/verification.md). Use deterministic synthetic fixtures; do not rely solely on mocked repositories.
+The full-MVP verification target is real PostgreSQL integration coverage for two users, two organizations and all roles. Attempt every read/write route with a foreign project ID, revoked membership, forged tenant context, pooled connection reuse and concurrent owner changes. The initial slice passes 29 integration cases and 12 browser scenarios; see [current evidence and remaining cases](../../docs/verification.md). Use deterministic synthetic fixtures; do not rely solely on mocked repositories.
 
 ## Dependencies and decisions
 
@@ -38,3 +38,5 @@ Reference: [PostgreSQL row-security behavior](https://www.postgresql.org/docs/18
 ## TF-02 implementation sequence
 
 Contract: [memberships](contracts/memberships.md). First add failing integration tests, then migration `002-membership-management.sql`, owner-only API routes in `apps/api/src/memberships.ts`, and the Members UI. Preserve migration 001 and its checksum. Reuse the existing transaction-local identity boundary. Add browser coverage and record checks/self-review before opening a PR. The membership row lock protocol serializes all changes per organization; direct table mutation stays denied. Existing project-role checks remain authoritative; project edit/archive and organization rename are outside this membership delivery.
+
+T009a corrects the discovered UI recovery defect in the same PR: permanent browser regression first, then reload the authorized list after 403/404 access refresh. Separate mutation feedback from list-loading errors so the recovery does not erase the actionable message. Keep the keyed organization view and aborted requests, and verify actual actor revocation still removes controls/data. No API, dependency or schema changes are needed.

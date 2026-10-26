@@ -26,6 +26,7 @@ T001–T008 were merged in PR #7 on 2026-10-25. T009 is implemented and locally 
 - [x] T007 Build sign-in, organization switcher and create/list UI in apps/web/src; clear tenant-scoped caches on switching. Depends T005. [TF-A03,A09]
 - [x] T008 Add first-slice browser scenario in tests/e2e; record commit, commands, result and workflow findings in docs/checkpoints. Depends T006,T007. [TF-A09; ENG-02]
 - [x] T009 Implement owner-only membership routes in apps/api/src/memberships.ts, the Members UI, database operation functions and real concurrency/browser checks. Depends T008. [TF-A05,A07,A08]
+- [x] T009a Fix membership error recovery in apps/web/src/Members.tsx: add failing permanent browser regressions for unknown email/stale target, preserve actionable error and input, automatically reload authorized members, retain revoked-access protection, and disambiguate confirmation selectors. Record red/green evidence in docs/checkpoints. Depends T009; issue #3 / PR #8. [TF-A07,A08,A09]
 - [ ] T010 Complete project rename/archive, owner/admin organization rename and UI states in apps/api/src/projects and apps/web/src with persistence tests. Depends T008. [TF-A03–A06,A09]
 - [ ] T011 Add application CI under .github/workflows and complete acceptance-to-test mapping in docs/verification.md. Depends T009,T010. [TF-04]
 - [ ] T012 Implement deployment setup and docs/demo.md after hosting decision; satisfy docs/release-checklist.md and capture deployed smoke. Depends T011. [TF-05]

@@ -43,7 +43,7 @@ test('owner manages an existing member; last owner is protected and roles refres
   await expect(memberPage.getByRole('status')).toContainText('Only organization owners');
   await row.getByRole('combobox').selectOption('member');
   await row.getByRole('button',{name:'Save role',exact:true}).click();
-  await expect(page.getByRole('status')).toHaveText('Role updated.');
+  await expect(page.getByRole('status').filter({hasText:/^Role updated\.$/})).toBeVisible();
   await memberPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await expect(memberPage.getByRole('status')).toContainText('Your role is member');
   await memberPage.getByRole('button',{name:'Projects',exact:false}).click();
@@ -52,12 +52,86 @@ test('owner manages an existing member; last owner is protected and roles refres
   await page.screenshot({path:`docs/screenshots/members-${info.project.name}.png`,fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await row.getByRole('button',{name:'Remove',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(row).toBeVisible();
+  await row.getByRole('button',{name:'Remove',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:'Remove member',exact:true}).click();
   await expect(row).toHaveCount(0);
   await memberPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await expect(memberPage.getByRole('button',{name:'Create your first organization'})).toBeVisible();
   expect(errors).toEqual([]);
  }finally{await memberContext.close();}
+});
+
+test('membership errors recover the authoritative list and keep actionable feedback',async({page,browser})=>{
+ const teammateContext=await browser.newContext({baseURL:origin});
+ try{
+  const teammate=await signup(teammateContext.request,'Recovery Member');
+  const owner=await signup(page.request,'Recovery Owner');
+  const organization=await org(page.request,'Recovery Studio');
+  const base=`/api/organizations/${organization}/members`;
+  expect((await page.request.post(base,{headers:{Origin:origin},data:{email:teammate.email,role:'member'}})).status()).toBe(201);
+  await page.goto('/');await page.getByRole('button',{name:'Members',exact:false}).click();
+  const ownRow=page.getByRole('listitem',{name:owner.email,exact:true});
+  const row=page.getByRole('listitem',{name:teammate.email,exact:true});
+  await expect(row).toBeVisible();
+  for(const [email,status] of [[teammate.email,409],[`missing-${randomUUID()}@example.test`,404]] as const){
+   await page.getByLabel('Registered email',{exact:true}).fill(email);
+   const response=page.waitForResponse(r=>r.url().endsWith(base)&&r.request().method()==='POST');
+   await page.getByRole('button',{name:'Add member',exact:true}).click();
+   const result=await response;expect(result.status()).toBe(status);
+   const message=(await result.json()).error;
+   await expect(ownRow).toBeVisible();await expect(row).toBeVisible();
+   await expect(page.getByRole('listitem')).toHaveCount(2);
+   await expect(page.getByRole('alert')).toHaveText(message);
+   await expect(page.getByLabel('Registered email',{exact:true})).toHaveValue(email);
+  }
+  // Another client removes the target while this browser still shows its row.
+  expect((await page.request.delete(`${base}/${teammate.id}`,{headers:{Origin:origin},data:{}})).status()).toBe(200);
+  await row.getByRole('combobox').selectOption('admin');
+  const missingTarget=page.waitForResponse(r=>r.url().endsWith(`${base}/${teammate.id}`)&&r.request().method()==='PATCH');
+  await row.getByRole('button',{name:'Save role',exact:true}).click();
+  const result=await missingTarget;expect(result.status()).toBe(404);
+  await expect(ownRow).toBeVisible();await expect(row).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveText((await result.json()).error);
+  // Recovery leaves the form usable without a manual refresh.
+  await page.getByLabel('Registered email',{exact:true}).fill(teammate.email);
+  await page.getByRole('button',{name:'Add member',exact:true}).click();
+  await expect(row).toBeVisible();await expect(page.getByRole('alert')).toHaveCount(0);
+ }finally{await teammateContext.close();}
+});
+
+test('membership error recovery never restores details after actor demotion or removal',async({page,browser})=>{
+ const otherContext=await browser.newContext({baseURL:origin});
+ try{
+  const other=await signup(otherContext.request,'Other Owner');
+  const actor=await signup(page.request,'Revoked Owner');
+  const organization=await org(page.request,'Revocation Studio');
+  const base=`/api/organizations/${organization}/members`;
+  expect((await page.request.post(base,{headers:{Origin:origin},data:{email:other.email,role:'owner'}})).status()).toBe(201);
+  await page.goto('/');await page.getByRole('button',{name:'Members',exact:false}).click();
+  const otherRow=page.getByRole('listitem',{name:other.email,exact:true});
+  await expect(otherRow).toBeVisible();
+  for(const status of [403,404]){
+   const change=status===403
+    ?await otherContext.request.patch(`${base}/${actor.id}`,{headers:{Origin:origin},data:{role:'member'}})
+    :await otherContext.request.delete(`${base}/${actor.id}`,{headers:{Origin:origin},data:{}});
+   expect(change.status()).toBe(200);
+   await otherRow.getByRole('combobox').selectOption('admin');
+   const response=page.waitForResponse(r=>r.url().endsWith(`${base}/${other.id}`)&&r.request().method()==='PATCH');
+   await otherRow.getByRole('button',{name:'Save role',exact:true}).click();
+   expect((await response).status()).toBe(status);
+   await expect(page.getByRole('listitem')).toHaveCount(0);
+   await expect(page.getByRole('button',{name:'Add member',exact:true})).toHaveCount(0);
+   if(status===403){
+    await expect(page.getByRole('status')).toContainText('Your role is member');
+    expect((await otherContext.request.patch(`${base}/${actor.id}`,{headers:{Origin:origin},data:{role:'owner'}})).status()).toBe(200);
+    await page.reload();await page.getByRole('button',{name:'Members',exact:false}).click();
+    await expect(otherRow).toBeVisible();
+   }else await expect(page.getByRole('button',{name:'Create your first organization'})).toBeVisible();
+  }
+ }finally{await otherContext.close();}
 });
 
 test('late member list cannot appear in another selected organization',async({page,browser})=>{

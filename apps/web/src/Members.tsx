@@ -18,9 +18,11 @@ function RemoveDialog({member,busy,onClose,onConfirm}:{member:Member;busy:boolea
 
 export function Members({organization,currentUserId,onChanged,onSessionExpired}:Props) {
   const [members,setMembers]=useState<Member[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState('');
+  const [mutationError,setMutationError]=useState('');
   const [busy,setBusy]=useState(false),[retry,setRetry]=useState(0),[notice,setNotice]=useState(''),[remove,setRemove]=useState<Member|null>(null);
   const [email,setEmail]=useState(''),[newRole,setNewRole]=useState<Role>('member'),[draftRoles,setDraftRoles]=useState<Record<string,Role>>({});
   const isOwner=organization.role==='owner';
+  const visibleError=error||mutationError;
   useEffect(()=>{
     const controller=new AbortController();setMembers([]);setError('');setLoading(true);
     if(!isOwner){setLoading(false);return()=>controller.abort();}
@@ -33,14 +35,21 @@ export function Members({organization,currentUserId,onChanged,onSessionExpired}:
 
   async function mutate(path:string,body:unknown,method:string,message:string) {
     if(busy)return;
-    setBusy(true);setError('');setNotice('');
+    setBusy(true);setError('');setMutationError('');setNotice('');
     try {
       await api(path,body,undefined,method);setRemove(null);setEmail('');setMembers([]);
       await onChanged();setRetry(n=>n+1);setNotice(message);
     } catch(e) {
       setRemove(null);
       if(e instanceof ApiError&&e.status===401)onSessionExpired();
-      else {setError(e instanceof Error?e.message:'Unable to update membership.');if(e instanceof ApiError&&[403,404].includes(e.status)){setMembers([]);await onChanged();}}
+      else {
+        setMutationError(e instanceof Error?e.message:'Unable to update membership.');
+        if(e instanceof ApiError&&[403,404].includes(e.status)){
+          // A missing target and revoked access share status codes. Revalidate both
+          // access and the list; retain the mutation message through the reload.
+          setMembers([]);await onChanged();setRetry(n=>n+1);
+        }
+      }
     } finally {setBusy(false);}
   }
   function add(e:FormEvent){e.preventDefault();void mutate(`/api/organizations/${organization.id}/members`,{email,role:newRole},'POST','Member added.');}
@@ -53,7 +62,7 @@ export function Members({organization,currentUserId,onChanged,onSessionExpired}:
         <label>New member role<select aria-label="New member role" value={newRole} onChange={e=>setNewRole(e.target.value as Role)} disabled={busy}>{roles.map(role=><option key={role} value={role}>{role}</option>)}</select></label>
         <button className="button primary" disabled={busy||loading}>Add member</button>
       </form>
-      {error&&<div className="error-panel"><div className="notice" role="alert">{error}</div><button className="button secondary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>Refresh members</button></div>}
+      {visibleError&&<div className="error-panel"><div className="notice" role="alert">{visibleError}</div><button className="button secondary" disabled={busy} onClick={()=>{setMutationError('');setRetry(n=>n+1);}}>Refresh members</button></div>}
       {notice&&<p className="read-only" role="status">{notice}</p>}
       {loading?<p className="loading" role="status">Loading members…</p>:<ul className="member-list" aria-label="Members">
         {members.map(member=><li key={member.user_id} className="member-row" aria-label={member.email}>
