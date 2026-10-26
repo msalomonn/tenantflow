@@ -5,6 +5,7 @@ export function createAuth(pool:Pool, config:Config) {
   return betterAuth({
     appName:'TenantFlow',database:pool,baseURL:config.origin,secret:config.secret,
     trustedOrigins:[config.origin],
+    user:{deleteUser:{enabled:false}},
     emailAndPassword:{enabled:true,minPasswordLength:12,maxPasswordLength:128},
     session:{expiresIn:60*60*24,updateAge:60*60,cookieCache:{enabled:false}},
     advanced:{useSecureCookies:config.production,ipAddress:{ipAddressHeaders:['x-tenantflow-client-ip']}},

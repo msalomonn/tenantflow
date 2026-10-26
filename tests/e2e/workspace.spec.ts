@@ -10,7 +10,16 @@ test('sign up, organize projects, switch tenants, reload and sign in again',asyn
   await page.getByLabel('Your name',{exact:true}).fill('Morgan Ellis');
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password',{exact:true}).fill(password);
-  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  async function submitSignup(){
+    const response=page.waitForResponse(r=>r.url().endsWith('/api/auth/sign-up/email')&&r.request().method()==='POST');
+    await page.getByRole('button',{name:'Create account',exact:true}).click();return response;
+  }
+  let signupResponse=await submitSignup();
+  if(signupResponse.status()===429){
+    const seconds=Number(signupResponse.headers()['retry-after']??10);expect(seconds).toBeLessThanOrEqual(10);
+    await new Promise(resolve=>setTimeout(resolve,(seconds+0.2)*1000));signupResponse=await submitSignup();
+  }
+  expect(signupResponse.status()).toBe(200);
   await page.getByRole('button',{name:'Create your first organization'}).click();
   await page.getByLabel('Organization name',{exact:true}).fill('North Studio');
   await page.getByRole('dialog').getByRole('button',{name:'Create organization',exact:true}).click();
