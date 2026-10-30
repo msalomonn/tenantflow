@@ -3,6 +3,7 @@ import { Pool, type PoolClient } from 'pg';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { createAuth } from './auth.js';
 import type { Config } from './config.js';
+import { mountMembershipRoutes } from './memberships.js';
 
 class HttpError extends Error { constructor(public status:number, message:string) { super(message); } }
 function nameFrom(body:unknown):string {
@@ -101,12 +102,15 @@ export function createApplication(config:Config) {
     });
     res.status(201).json({project});
   });
+  mountMembershipRoutes(app,{transaction,membership,uuid,fail(status,message){throw new HttpError(status,message);}});
   app.use('/api',(_req,res)=>res.status(404).json({error:'Endpoint not found.'}));
   app.use((error:unknown,_req:Request,res:Response,_next:NextFunction)=>{
     if(error instanceof HttpError) return res.status(error.status).json({error:error.message});
     if(error instanceof SyntaxError) return res.status(400).json({error:'Invalid JSON body.'});
     if(typeof error==='object' && error!==null && 'type' in error && error.type==='entity.too.large') return res.status(413).json({error:'Request body is too large.'});
     const code=typeof error==='object' && error!==null && 'code' in error ? String(error.code) : 'unknown';
+    const membershipErrors:Record<string,[number,string]>={PT400:[400,'Invalid membership request.'],PT403:[403,'Only owners can manage members.'],PT404:[404,'Organization, registered user or membership not found.'],PT409:[409,'This user is already a member, or the change would remove the last owner.']};
+    if(code in membershipErrors){const [status,message]=membershipErrors[code];return res.status(status).json({error:message});}
     // Log only an error code: request content, sessions and credentials stay out of logs.
     console.error('request_failed',code);
     return res.status(500).json({error:'The request could not be completed. Please try again.'});

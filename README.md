@@ -2,9 +2,9 @@
 
 A multi-tenant project workspace demonstrating authorization boundaries and organization-scoped data.
 
-**Status:** TF-00/TF-01 implemented and verified locally; awaiting PR review. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
+**Status:** TF-00/TF-01 merged; TF-02 membership management implemented and locally verified, awaiting PR review. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
 
-React + TypeScript, Node.js + Express, Better Auth and PostgreSQL with restricted runtime roles and row-level security. The first slice supports signup/sign-in, organizations, project creation/list/search and tenant switching. Membership administration and project edit/archive remain planned.
+React + TypeScript, Node.js + Express, Better Auth and PostgreSQL with restricted runtime roles and row-level security. The app supports signup/sign-in, organizations, project creation/list/search, tenant switching and owner-managed memberships. Project edit/archive and organization renaming remain planned.
 
 ![TenantFlow workspace](docs/screenshots/workspace-desktop.png)
 
@@ -24,6 +24,12 @@ Open http://localhost:4310. Create an account with a password of at least 12 cha
 
 Setup generates random local credentials in a gitignored `.env` and never overwrites it. Keep that file alongside the existing database volume; deleting it does not reset database passwords. PostgreSQL listens on local port 55432. Stop it with `docker compose stop db`; data persists in its volume.
 
+## Manage members
+
+Select an organization and open **Members**. Owners can add an already registered user by exact email, choose owner/admin/member/viewer, save a changed role, or remove a member after confirmation. Create a second account separately to try this locally; no invitation email is sent. The last owner cannot be removed or demoted, including simultaneous requests. Add another owner before transferring responsibility.
+
+Admins, members and viewers cannot manage memberships. Server permissions change on the next request. The workspace refreshes its role and accessible organizations after changes and when the window regains focus; this is not a real-time push notification system.
+
 ## Verify
 
 With PostgreSQL running and migrations applied:
@@ -35,7 +41,7 @@ npm run check
 
 Stop an existing development server before the browser checks: Playwright owns port 4310 during the run. The checks type-check code, build the web bundle, run real-database integration tests and exercise Chromium at desktop and mobile sizes. Tests create synthetic accounts and organizations in the local database.
 
-Local results: **17 integration tests and 4 browser scenarios passed**, plus type checking and production web build. [Verification and limits](docs/verification.md) distinguish the initial slice from the complete MVP. CI runs the same commands on pull requests; see the PR for its independent result.
+Local results: **29 integration tests and 12 browser scenarios passed**, plus type checking and production web build. [Verification and limits](docs/verification.md) distinguish the initial slice from the complete MVP. CI runs the same commands on pull requests; see the PR for its independent result.
 
 ## Engineering records
 
@@ -49,6 +55,6 @@ Local results: **17 integration tests and 4 browser scenarios passed**, plus typ
 - [Release checklist](docs/release-checklist.md) and [Spec Kit setup](docs/spec-kit.md)
 - [Open work](https://github.com/msalomonn/tenantflow/issues)
 
-The tentative full-MVP target is November 6, 2026; public release is November 13. Membership administration, last-owner concurrency protection, project editing/archiving and deployment remain open. This local slice is not a production-readiness claim.
+The tentative full-MVP target is November 6, 2026; public release is November 13. Membership management and last-owner concurrency protection are implemented in TF-02; review/integration is pending. Project editing/archiving, organization renaming and deployment remain open. This local slice is not a production-readiness claim.
 
 The cross-project roadmap lives in [portfolio-engineering](https://github.com/msalomonn/portfolio-engineering).

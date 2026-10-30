@@ -1,17 +1,12 @@
 import React, {useEffect,useRef,useState, type FormEvent, type ReactNode} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
+import {api,ApiError} from './api';
+import {Members} from './Members';
 
 type User={id:string;name:string;email:string};
 type Organization={id:string;name:string;role:'owner'|'admin'|'member'|'viewer'};
 type Project={id:string;name:string;created_at:string};
-class ApiError extends Error {constructor(public status:number,message:string){super(message);}}
-async function api<T>(path:string,body?:unknown,signal?:AbortSignal):Promise<T> {
-  const response=await fetch(path,{method:body===undefined?'GET':'POST',credentials:'same-origin',headers:body===undefined?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal});
-  const data=await response.json();
-  if(!response.ok)throw new ApiError(response.status,typeof data.error==='string'?data.error:data.message??'Something went wrong. Please try again.');
-  return data;
-}
 function Brand(){return <span className="brand"><span className="brand-mark" aria-hidden="true">t<span>f</span></span>tenantflow<span className="brand-dot">.</span></span>;}
 function Folder(){return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.6"/></svg>;}
 function Notice({children}:{children:ReactNode}){return <div className="notice" role="alert">{children}</div>;}
@@ -62,11 +57,30 @@ function Projects({organization,onSessionExpired}:{organization:Organization;onS
 
 function Workspace({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const [organizations,setOrganizations]=useState<Organization[]>([]),[selected,setSelected]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[create,setCreate]=useState(false),[signingOut,setSigningOut]=useState(false),[retry,setRetry]=useState(0);
-  useEffect(()=>{const c=new AbortController();setLoading(true);setError('');api<{organizations:Organization[]}>('/api/organizations',undefined,c.signal).then(r=>{setOrganizations(r.organizations);setSelected(current=>r.organizations.some(o=>o.id===current)?current:r.organizations[0]?.id??'');}).catch(e=>{if(e.name!=='AbortError'){if(e instanceof ApiError&&e.status===401)onSignOut();else setError(e.message);}}).finally(()=>{if(!c.signal.aborted)setLoading(false);});return()=>c.abort();},[retry]);
+  const [view,setView]=useState<'projects'|'members'>('projects');
+  const refreshGeneration=useRef(0),refreshController=useRef<AbortController|null>(null);
+  async function refreshOrganizations(){
+    const generation=++refreshGeneration.current;refreshController.current?.abort();
+    const controller=new AbortController();refreshController.current=controller;setError('');
+    try {
+      const result=await api<{organizations:Organization[]}>('/api/organizations',undefined,controller.signal);
+      if(generation!==refreshGeneration.current)return;
+      setOrganizations(result.organizations);setSelected(current=>result.organizations.some(o=>o.id===current)?current:result.organizations[0]?.id??'');
+    } catch(e) {
+      if(controller.signal.aborted||generation!==refreshGeneration.current)return;
+      if(e instanceof ApiError&&e.status===401)onSignOut();
+      else {setOrganizations([]);setSelected('');setError(e instanceof Error?e.message:'Unable to refresh your workspace.');}
+    } finally {if(generation===refreshGeneration.current)setLoading(false);}
+  }
+  useEffect(()=>{
+    void refreshOrganizations();
+    const onFocus=()=>{void refreshOrganizations();};window.addEventListener('focus',onFocus);
+    return()=>{++refreshGeneration.current;refreshController.current?.abort();window.removeEventListener('focus',onFocus);};
+  },[retry]);
   const org=organizations.find(o=>o.id===selected);
   async function signOut(){setSigningOut(true);try{await api('/api/auth/sign-out',{});onSignOut();}catch(e){setError(e instanceof Error?e.message:'Could not sign out.');}finally{setSigningOut(false);}}
-  return <div className="app-shell"><aside className="sidebar"><Brand/><div className="org-control"><label htmlFor="organization">WORKSPACE</label><select id="organization" value={selected} disabled={loading||!organizations.length} onChange={e=>setSelected(e.target.value)}>{!organizations.length&&<option value="">No organizations yet</option>}{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select><button className="add-org" onClick={()=>setCreate(true)}>＋ Create organization</button></div><nav aria-label="Workspace navigation"><span className="nav-label">WORKSPACE</span><span className="nav-active"><Folder/> Projects <span>↗</span></span></nav><div className="sidebar-note"><span className="eyebrow light">A SPACE TO CALL YOURS</span><p>Different teams.<br/>Clear boundaries.<br/>Room to do your best work.</p><span aria-hidden="true">✳</span></div><div className="user-panel"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><div><strong>{user.name}</strong><span>{user.email}</span></div><button title="Sign out" aria-label="Sign out" onClick={signOut} disabled={signingOut}>↪</button></div></aside>
-    <div className="main-shell"><div className="topbar"><span>{org?.name??'Your workspace'} <span className="breadcrumb">/</span> Projects</span><span className="topbar-status"><i/> Your space to build</span></div><main className="workspace-content">{error&&<div className="error-panel"><Notice>{error}</Notice><button className="button secondary" onClick={()=>setRetry(r=>r+1)}>Try again</button></div>}{loading?<div role="status" className="loading">Loading your workspace…</div>:org?<Projects key={org.id} organization={org} onSessionExpired={onSignOut}/>:!error?<section className="welcome-empty"><span className="eyebrow">LET'S MAKE SPACE</span><h1>Welcome, {user.name.split(' ')[0]}<span className="accent">.</span></h1><p className="muted">Every great project needs a place to begin.<br/>Create an organization for your team and take it from there.</p><button className="button primary" onClick={()=>setCreate(true)}>Create your first organization <span aria-hidden="true">↗</span></button></section>:null}</main></div>
+  return <div className="app-shell"><aside className="sidebar"><Brand/><div className="org-control"><label htmlFor="organization">WORKSPACE</label><select id="organization" value={selected} disabled={loading||!organizations.length} onChange={e=>setSelected(e.target.value)}>{!organizations.length&&<option value="">No organizations yet</option>}{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select><button className="add-org" onClick={()=>setCreate(true)}>＋ Create organization</button></div><nav aria-label="Workspace navigation"><span className="nav-label">WORKSPACE</span><button className={`nav-link ${view==='projects'?'nav-active':''}`} onClick={()=>setView('projects')} aria-current={view==='projects'?'page':undefined}><Folder/> Projects <span>↗</span></button><button className={`nav-link ${view==='members'?'nav-active':''}`} onClick={()=>{setView('members');void refreshOrganizations();}} aria-current={view==='members'?'page':undefined}>Members <span>↗</span></button></nav><div className="sidebar-note"><span className="eyebrow light">A SPACE TO CALL YOURS</span><p>Different teams.<br/>Clear boundaries.<br/>Room to do your best work.</p><span aria-hidden="true">✳</span></div><div className="user-panel"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><div><strong>{user.name}</strong><span>{user.email}</span></div><button title="Sign out" aria-label="Sign out" onClick={signOut} disabled={signingOut}>↪</button></div></aside>
+    <div className="main-shell"><div className="topbar"><span>{org?.name??'Your workspace'} <span className="breadcrumb">/</span> {view==='members'?'Members':'Projects'}</span><span className="topbar-status"><i/> Your space to build</span></div><main className="workspace-content">{error&&<div className="error-panel"><Notice>{error}</Notice><button className="button secondary" onClick={()=>setRetry(r=>r+1)}>Try again</button></div>}{loading?<div role="status" className="loading">Loading your workspace…</div>:org?(view==='members'?<Members key={org.id} organization={org} currentUserId={user.id} onChanged={refreshOrganizations} onSessionExpired={onSignOut}/>:<Projects key={org.id+':'+org.role} organization={org} onSessionExpired={onSignOut}/>):!error?<section className="welcome-empty"><span className="eyebrow">LET'S MAKE SPACE</span><h1>Welcome, {user.name.split(' ')[0]}<span className="accent">.</span></h1><p className="muted">Every great project needs a place to begin.<br/>Create an organization for your team and take it from there.</p><button className="button primary" onClick={()=>setCreate(true)}>Create your first organization <span aria-hidden="true">↗</span></button></section>:null}</main></div>
     {create&&<NameDialog kind="organization" onClose={()=>setCreate(false)} onCreate={async name=>{const r=await api<{organization:Organization}>('/api/organizations',{name});setOrganizations(o=>[...o,r.organization]);setSelected(r.organization.id);}}/>}
   </div>;
 }

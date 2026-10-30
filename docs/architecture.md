@@ -29,4 +29,6 @@ React keys the project component by organization and aborts old requests on unmo
 | GET | `/api/organizations/:orgId/projects/:projectId` | Scoped detail or 404 |
 | GET | `/api/health` | Database connectivity |
 
-The draft's `/api/logout` becomes Better Auth's canonical `/api/auth/sign-out`. Membership mutation and project edit/archive remain follow-up work.
+The draft's `/api/logout` becomes Better Auth's canonical `/api/auth/sign-out`. Owner-only membership management now uses the routes in the [TF-02 contract](../specs/001-tenant-isolation/contracts/memberships.md). Project edit/archive remain follow-up work.
+
+Membership writes remain unavailable as direct table grants. Owner-only security-definer operations lock the organization row and recheck actor authority before modifying memberships or counting owners. The application role cannot query the auth user directory directly. Member listing exposes only identity and role for the selected organization and requires owner authority. [ADR 0003](adr/0003-membership-serialization.md) records this boundary.
