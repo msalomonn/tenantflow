@@ -23,3 +23,13 @@ Before editing application code, the permanent `membership errors recover the au
 - `git diff --check`: passed. Generated screenshots were restored from their pre-run copies to avoid unrelated fixture changes.
 
 Self-review checked error lifecycle, server-authoritative access refresh, lack of reload loops, organization-switch isolation and the regression assertions. No API, database, dependency or permission changes. No independent reviewer approval. Spec Kit prerequisites were checked; no feature checklists or pre/post implementation extension hooks are present. T010–T012 remain outside this correction. CI status belongs to the PR and must be checked against its new head.
+
+
+## Visual evidence captured 2026-10-30
+
+Application source: `89c19d138d490a32d2489dd51c5cba0d1b5b1012`. Four targeted browser scenarios passed (owner management and error recovery, each on desktop and Chromium mobile emulation). A temporary copy of the repository browser tests added screenshot calls after the assertions; it used the local development server and synthetic accounts. No application or permanent test code changed for these captures. Images were visually inspected before inclusion.
+
+- Unknown-email 404: the error and entered email remain visible while both authorized members reload automatically, without clicking Refresh members: [desktop](../screenshots/membership-recovery-desktop.png), [mobile](../screenshots/membership-recovery-mobile.png). TF-A07/A09, T009a.
+- Last-owner removal is rejected and the owner remains listed: [desktop](../screenshots/membership-last-owner-desktop.png), [mobile](../screenshots/membership-last-owner-mobile.png). TF-A07.
+
+These captures show the resulting UI states. Automated assertions and the linked CI logs establish the behavior; still images alone do not establish concurrency or server authorization.
