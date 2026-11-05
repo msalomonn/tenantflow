@@ -15,7 +15,7 @@ For TF-01, implement schema/migrations, request identity+membership boundary, cr
 
 ## Executable task checklist
 
-T001–T008 were merged in PR #7 on 2026-10-25. T009 is implemented and locally verified, pending its own PR integration. See the [checkpoint](../../docs/checkpoints/2026-10-25-first-slice.md). Issue state remains authoritative for review/merge. Initial API modules are `apps/api/src/auth.ts` and `apps/api/src/app.ts`; later tasks can split route modules as their scope grows.
+T001–T008 were merged in PR #7 on 2026-10-25. T009/T009a merged in PR #8 on 2026-10-30. T010 is implemented and locally verified; its PR owns review/integration. See the [checkpoint](../../docs/checkpoints/2026-10-25-first-slice.md). Issue state remains authoritative for review/merge. Initial API modules are `apps/api/src/auth.ts` and `apps/api/src/app.ts`; later tasks can split route modules as their scope grows.
 
 - [x] T001 Record identity/session choice, CSRF protections and supported dependency versions in docs/adr/0002-identity.md; implement only after initial scope approval. [TF-00]
 - [x] T002 Create reproducible web/API/database startup under apps/web, apps/api and db/migrations with root setup instructions and lockfile. Depends T001. [TF-00]
@@ -27,6 +27,6 @@ T001–T008 were merged in PR #7 on 2026-10-25. T009 is implemented and locally 
 - [x] T008 Add first-slice browser scenario in tests/e2e; record commit, commands, result and workflow findings in docs/checkpoints. Depends T006,T007. [TF-A09; ENG-02]
 - [x] T009 Implement owner-only membership routes in apps/api/src/memberships.ts, the Members UI, database operation functions and real concurrency/browser checks. Depends T008. [TF-A05,A07,A08]
 - [x] T009a Fix membership error recovery in apps/web/src/Members.tsx: add failing permanent browser regressions for unknown email/stale target, preserve actionable error and input, automatically reload authorized members, retain revoked-access protection, and disambiguate confirmation selectors. Record red/green evidence in docs/checkpoints. Depends T009; issue #3 / PR #8. [TF-A07,A08,A09]
-- [ ] T010 Complete project rename/archive, owner/admin organization rename and UI states in apps/api/src/projects and apps/web/src with persistence tests. Depends T008. [TF-A03–A06,A09]
+- [x] T010 Complete project rename/archive, owner/admin organization rename and UI states in apps/api/src/projects and apps/web/src with persistence tests. Depends T008. [TF-A03–A06,A09]
 - [ ] T011 Add application CI under .github/workflows and complete acceptance-to-test mapping in docs/verification.md. Depends T009,T010. [TF-04]
 - [ ] T012 Implement deployment setup and docs/demo.md after hosting decision; satisfy docs/release-checklist.md and capture deployed smoke. Depends T011. [TF-05]

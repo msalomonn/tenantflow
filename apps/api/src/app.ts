@@ -3,13 +3,14 @@ import { Pool, type PoolClient } from 'pg';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { createAuth } from './auth.js';
 import type { Config } from './config.js';
+import { mountProjectLifecycle } from './projects.js';
 import { mountMembershipRoutes } from './memberships.js';
 
 class HttpError extends Error { constructor(public status:number, message:string) { super(message); } }
 function nameFrom(body:unknown):string {
   if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).some(k=>k!=='name')) throw new HttpError(400,'Only a name is accepted.');
   const name=(body as {name?:unknown}).name;
-  if(typeof name!=='string' || [...name.trim()].length<1 || [...name.trim()].length>120) throw new HttpError(400,'Use a name between 1 and 120 characters.');
+  if(typeof name!=='string' || name.includes('\0') || [...name.trim()].length<1 || [...name.trim()].length>120) throw new HttpError(400,'Use a name between 1 and 120 characters.');
   return name.trim();
 }
 function uuid(value:unknown):string {
@@ -86,7 +87,7 @@ export function createApplication(config:Config) {
     const orgId=uuid(req.params.orgId),projectId=uuid(req.params.projectId);
     const project=await transaction(res.locals.user.id,orgId,async c=>{
       await membership(c,orgId,res.locals.user.id);
-      const result=await c.query('SELECT id,organization_id,name,created_at FROM app.projects WHERE organization_id=$1 AND id=$2 AND archived_at IS NULL',[orgId,projectId]);
+      const result=await c.query('SELECT id,organization_id,name,created_at,archived_at FROM app.projects WHERE organization_id=$1 AND id=$2',[orgId,projectId]);
       if(!result.rowCount) throw new HttpError(404,'Project not found.');
       return result.rows[0];
     });
@@ -102,6 +103,7 @@ export function createApplication(config:Config) {
     });
     res.status(201).json({project});
   });
+  mountProjectLifecycle(app,{transaction,membership,uuid,nameFrom,fail(status,message){throw new HttpError(status,message);}});
   mountMembershipRoutes(app,{transaction,membership,uuid,fail(status,message){throw new HttpError(status,message);}});
   app.use('/api',(_req,res)=>res.status(404).json({error:'Endpoint not found.'}));
   app.use((error:unknown,_req:Request,res:Response,_next:NextFunction)=>{
