@@ -1,5 +1,7 @@
 # Release evidence — not yet satisfied
 
+TF-04 maps all MVP acceptance criteria and verifies the local stack; see [verification](verification.md) and [dependency review](dependency-review.md). The items below must still be evaluated against the chosen release commit and deployment environment. A passing local/PR run does not by itself sign off this release.
+
 - [ ] Every MVP acceptance ID maps to passing verification at the release commit.
 - [ ] A fresh checkout can start the documented local stack.
 - [ ] CI runs build, relevant tests and dependency analysis; findings are resolved or documented.

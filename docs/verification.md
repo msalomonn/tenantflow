@@ -1,4 +1,38 @@
-# Verification — TF-03
+# Verification — TF-04
+
+Date: 2026-11-05, America/Argentina/Buenos_Aires. Environment: macOS arm64, Node 24.22.1 / npm 11.19.1, Docker PostgreSQL 18, Playwright 1.64.1 Chromium. Baseline: merged TF-03 commit `49c10c30f70cbbd4165be016c2e0c405724ceb3e`. Exact source head and remote CI are recorded in the PR. This record covers local acceptance hardening, not deployment.
+
+Local result: `npm run check` passed TypeScript, production web build, **43 integration cases and 24 desktop/mobile browser scenarios**; `npm run audit` reported zero vulnerabilities. Four new screenshots were visually inspected.
+
+## Complete MVP acceptance mapping
+
+Paths below are relative to the repository root. Commands: `npm run check` (types, production web build, integration and browser tests) and `npm run audit` (all lockfile dependencies).
+
+| Criterion | Reproducible coverage |
+| --- | --- |
+| TF-A01 | `tests/integration/isolation.test.ts` real cookies and persisted sign-out; `boundaries.test.ts` checks absent/forged/expired/revoked sessions across every protected route and rejects incorrect passwords. `tests/e2e/boundaries.spec.ts` loses a real session while editing and verifies login replaces the workspace and dialog. |
+| TF-A02 | `tests/integration/isolation.test.ts` verifies owner creation and deliberately fails owner insertion, checking the organization transaction rolls back. |
+| TF-A03 | `isolation.test.ts` scoped lists and pooled context/rollback; `tests/e2e/workspace.spec.ts`, `memberships.spec.ts`, `projects.spec.ts` delay responses and switch organizations, asserting old lists/mutations cannot overwrite the current workspace. |
+| TF-A04 | `isolation.test.ts`, `memberships.test.ts`, `projects.test.ts` exercise foreign/guessed IDs, forged tenant context and direct restricted-role SQL, with rejected reads/writes and unchanged data. |
+| TF-A05 | `memberships.test.ts` and `projects.test.ts` cover owner/admin/member/viewer permissions for creation, editing, archive, organization rename and owner-only membership management. Browser cases verify controls and authoritative refresh after role changes. |
+| TF-A06 | `isolation.test.ts` and `projects.test.ts` replace the API instance against persistent PostgreSQL; validate trimmed 1–120 code-point names, reject invalid fields, retain archived rows/timestamps and hide them from default lists. `boundaries.spec.ts` rejects whitespace/overlong drafts before sending a mutation and renders markup-like names as inert text. |
+| TF-A07 | `memberships.test.ts` rejects duplicates and last-owner changes, including simultaneous updates/deletes and duplicate additions on independently blocked database connections. `memberships.spec.ts` covers corresponding UI feedback. |
+| TF-A08 | `memberships.test.ts` and `projects.test.ts` enforce demotion/removal on the next request and reject foreign relationships; a waiting actor is rechecked after a lock. Browser tests verify access refresh never restores revoked details. |
+| TF-A09 | `workspace.spec.ts` covers signup, organization/project creation, search, switching, reload and sign-in. Membership/lifecycle cases cover loading, empty, denied and recoverable error states, cancel/pending dialogs, console/overflow assertions and desktop/mobile rendering. |
+
+Additional boundaries: `auth-body-limit.test.ts` covers declared/chunked/gzip-expanded oversized authentication bodies, malformed JSON and exact-size success. `boundaries.test.ts` checks exact Origin and JSON on every unsafe protected route, unsafe database runtime roles, production HTTPS/secret configuration and Secure/HttpOnly/SameSite cookie attributes. The latter uses a local HTTP harness configured for an HTTPS origin; it does **not** test deployed TLS/proxy behavior.
+
+TF-04 adds six integration cases and two browser scenarios per viewport. The production-cookie test initially hit the real signup rate limit; its harness now honors bounded Retry-After before retrying. A fixture-header TypeScript error was corrected before the successful run. Existing application behavior satisfied the new assertions: no application, schema or dependency-version changes were needed. Browser fixtures remain synthetic local data; the new integration suite deletes its own accounts and organization.
+
+CI now checks repeat setup preserves credentials byte-for-byte, applies migrations twice to a fresh runner database, and blocks on any npm advisory or registry failure. Local results and the clean Linux checkout execution are separate evidence. See [dependency review and raw audit](dependency-review.md).
+
+New screenshots: [revoked session desktop](screenshots/hardening-session-desktop.png), [mobile](screenshots/hardening-session-mobile.png), [invalid draft desktop](screenshots/hardening-validation-desktop.png), [mobile](screenshots/hardening-validation-mobile.png). The capture shows the final safe UI; preceding assertions establish the transition and blocked mutation.
+
+Limits: Chromium desktop/mobile emulation only; no Safari/Firefox, load test, deployed smoke, email delivery, production proxy/TLS, backup/restore rehearsal, public quotas/retention or licensing review. These remain release work. See [TF-04 checkpoint](checkpoints/2026-11-05-acceptance-hardening.md) and [release checklist](release-checklist.md).
+
+---
+
+# Historical verification — TF-03
 
 Date: 2026-11-05, America/Argentina/Buenos_Aires. Environment: macOS arm64, Node 24.22.1, Docker PostgreSQL 18, Playwright 1.64.1 Chromium. Source: the commit containing this record; exact source head and remote CI are recorded in the PR.
 
