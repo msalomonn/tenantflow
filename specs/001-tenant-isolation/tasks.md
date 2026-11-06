@@ -15,7 +15,7 @@ For TF-01, implement schema/migrations, request identity+membership boundary, cr
 
 ## Executable task checklist
 
-T001–T008 were merged in PR #7 on 2026-10-25. T009/T009a merged in PR #8 on 2026-10-30. T010 merged in PR #9 on 2026-11-05. T011 is implemented and locally verified; its PR owns review/integration. See the [checkpoint](../../docs/checkpoints/2026-10-25-first-slice.md). Issue state remains authoritative for review/merge. Initial API modules are `apps/api/src/auth.ts` and `apps/api/src/app.ts`; later tasks can split route modules as their scope grows.
+T001–T008 were merged in PR #7 on 2026-10-25. T009/T009a merged in PR #8 on 2026-10-30. T010 merged in PR #9 on 2026-11-05. T011 merged in PR #10 on 2026-11-05. T012 preparation is documented in [TF-05](../002-public-demo/plan.md); deployment remains open. See the [checkpoint](../../docs/checkpoints/2026-10-25-first-slice.md). Issue state remains authoritative for review/merge. Initial API modules are `apps/api/src/auth.ts` and `apps/api/src/app.ts`; later tasks can split route modules as their scope grows.
 
 - [x] T001 Record identity/session choice, CSRF protections and supported dependency versions in docs/adr/0002-identity.md; implement only after initial scope approval. [TF-00]
 - [x] T002 Create reproducible web/API/database startup under apps/web, apps/api and db/migrations with root setup instructions and lockfile. Depends T001. [TF-00]

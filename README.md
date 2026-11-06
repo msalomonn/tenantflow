@@ -2,7 +2,7 @@
 
 A multi-tenant project workspace demonstrating authorization boundaries and organization-scoped data.
 
-**Status:** TF-00–TF-03 merged. TF-04 acceptance/dependency hardening is implemented; its PR tracks validation and integration. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
+**Status:** TF-00–TF-04 merged. TF-05 deployment design is proposed; hosting/budget and public app deployment remain pending. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
 
 React + TypeScript, Node.js + Express, Better Auth and PostgreSQL with restricted runtime roles and row-level security. The app supports signup/sign-in, organizations, project creation/list/search, tenant switching and owner-managed memberships. Writers can rename/archive projects; owners/admins can rename organizations.
 
@@ -54,6 +54,7 @@ Local results: **43 integration tests and 24 browser scenarios passed**, plus ty
 
 ## Engineering records
 
+- [TF-05 deployment proposal](docs/deployment-proposal.md) and [release specification](specs/002-public-demo/spec.md)
 - [TF-04 hardening contract](specs/001-tenant-isolation/contracts/hardening.md), [dependency review](docs/dependency-review.md) and [checkpoint](docs/checkpoints/2026-11-05-acceptance-hardening.md)
 - [TF-03 lifecycle contract](specs/001-tenant-isolation/contracts/project-lifecycle.md), [ADR](docs/adr/0004-project-lifecycle.md) and [checkpoint](docs/checkpoints/2026-11-05-project-lifecycle.md)
 - [Architecture and trust boundaries](docs/architecture.md)
@@ -66,6 +67,6 @@ Local results: **43 integration tests and 24 browser scenarios passed**, plus ty
 - [Release checklist](docs/release-checklist.md) and [Spec Kit setup](docs/spec-kit.md)
 - [Open work](https://github.com/msalomonn/tenantflow/issues)
 
-The original targets were November 6, 2026 for the local MVP and November 13 for public release; dates remain tentative. TF-02 merged in PR #8. TF-03 merged in PR #9, completing project editing/archiving and organization renaming. TF-04 has complete acceptance mapping and a blocking dependency audit; its PR owns integration status. TF-05 deployment remains open. Local verification is not production-readiness evidence.
+The original targets were November 6, 2026 for the local MVP and November 13 for public release; dates remain tentative. TF-02 merged in PR #8. TF-03 merged in PR #9, completing project editing/archiving and organization renaming. TF-04 merged in PR #10 with complete acceptance mapping and a blocking dependency audit. TF-05 deployment remains open. Local verification is not production-readiness evidence.
 
 The cross-project roadmap lives in [portfolio-engineering](https://github.com/msalomonn/portfolio-engineering).
