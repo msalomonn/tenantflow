@@ -23,3 +23,10 @@ Proposed shape: one same-origin web/API instance and one PostgreSQL 18 database 
 ## Release boundary
 
 D01–D09 and the release checklist must be evidenced before announcing the public app. This document adds requirements; it does not claim their implementation. Source repository visibility, license choice and GitHub presentation are independently tracked. Dates remain targets.
+
+## Delivery stories
+
+- US1 (P1): an operator migrates fresh/existing PostgreSQL using a non-superuser identity while users retain tenant and role isolation (TF-D02). This is TF-05a.
+- US2 (P1): an operator runs the production artifact behind verified ingress (TF-D01/D03).
+- US3 (P2): visitors use a bounded, temporary demo with clear feedback (TF-D04/D05).
+- US4 (P2): an operator releases and recovers the hosted demo with measured evidence (TF-D06–D09).

@@ -1,4 +1,30 @@
-# Verification — TF-04
+# Verification — TF-05a portable database roles
+
+Date: 2026-11-05, America/Argentina/Buenos_Aires. Environment: macOS arm64, Node 24.22.1 / npm 11.19.1, pinned Docker PostgreSQL 18 and Playwright 1.64.1 Chromium. Base: planning PR #11 at `5209ea8ff5417071da57a079c22b5fee401fab41`; this implementation is stacked on that branch. Exact implementation commit and remote CI are recorded in the PR.
+
+Local results: `npm run db:migrate` twice succeeded, preserving the existing local database. `npm run check` passed type checking, production web build, **43 integration cases, 4 portability scenarios and 24 desktop/mobile browser scenarios**. Within the fresh-database portability scenario, all 43 integration cases ran again against a schema created by a NOSUPERUSER/NOBYPASSRLS migration identity. These are two database contexts for the same integration suite, not 86 distinct cases. `npm run audit` reported **0 vulnerabilities**.
+
+## TF-D02 / US1 evidence
+
+| Contract | Reproducible evidence in tests/portability/migrations.test.ts |
+| --- | --- |
+| R01 | Fresh and legacy databases run the real migration CLI twice as an ordinary migration owner. Legacy bootstrap reproduces SQLSTATE 42501 before migration004, then succeeds after it. Archived project data and original checksum/timestamp rows survive. |
+| R02 / R03 | Catalog assertions verify all four definer owners, flags, empty search paths, PUBLIC execution revocation, internal-helper restriction, FORCE RLS and restricted schema/table/column grants. Runtime SET ROLE is rejected; project/password/session access and persistent schema CREATE are absent. |
+| R04 | Unsafe LOGIN flag blocks migration. Direct app membership and indirect auth membership in the definer role block both startup and migration. Temporary injections are restored within the disposable fixture. |
+| R05 | All 43 existing authorization/concurrency cases pass against the ordinary-owner schema. The suite covers signup, rollback, tenant isolation, RBAC, member races/last-owner protection, revocation and project lifecycle. |
+| R06 | An injected policy collision fails migration004, leaving no checksum row, no ownership transfer and no newly granted INSERT/CREATE privilege. Removing the collision permits successful migration, repeat execution and bootstrap. |
+
+Red command: `node --import tsx --test --test-name-pattern='legacy forced' tests/portability/migrations.test.ts`. Before the implementation it failed at the post-migration bootstrap assertion with SQLSTATE 42501. Green commands: `npm run test:portability`, then `npm run db:migrate` twice, `npm run check` and `npm run audit`. During fixture development, TypeScript signatures were corrected and inherited NODE_TEST_CONTEXT was removed from nested test processes; the fixture explicitly requires the child report to contain all 43 passing integration cases.
+
+The portability fixture uses a unique disposable PostgreSQL container and loopback port, random synthetic credentials, and cleanup scoped to that container. Administrative test access creates/inspects fixtures; migration execution uses the ordinary migration operator and application requests use restricted runtime roles. The main local database volume and credentials were preserved.
+
+Implementing-agent self-review covered transactional ownership transfer, narrow grants/RLS, unchanged function bodies, direct/transitive role escalation, migration idempotency and evidence consistency; no blocking finding remains for this slice. It is not independent reviewer approval. Migrations001–003 remain unchanged. No UI changes or new visual claims: the existing captures below remain the UI reference, and database evidence comes from executable assertions and CI output.
+
+Limits: no hosted provider preflight, paid resources, production startup/proxy validation, quotas/reset, deployed smoke or backup/restore rehearsal. Planning PR #11 and this implementation remain separate review steps. See [role contract](../specs/002-public-demo/contracts/database-roles.md), [ADR TF-0006](adr/0006-portable-definer-role.md) and [checkpoint](checkpoints/2026-11-05-portable-roles.md).
+
+---
+
+# Historical verification — TF-04
 
 Date: 2026-11-05, America/Argentina/Buenos_Aires. Environment: macOS arm64, Node 24.22.1 / npm 11.19.1, Docker PostgreSQL 18, Playwright 1.64.1 Chromium. Baseline: merged TF-03 commit `49c10c30f70cbbd4165be016c2e0c405724ceb3e`. Exact source head and remote CI are recorded in the PR. This record covers local acceptance hardening, not deployment.
 

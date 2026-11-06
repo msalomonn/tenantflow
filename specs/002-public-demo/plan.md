@@ -4,7 +4,7 @@
 
 ## Summary
 
-Prepare a small paid Render web/API + PostgreSQL deployment after proving portable role ownership, production startup, ingress behavior and demo limits locally. This branch contains planning documents only. Provider choice is a proposal; no resource or bill has been created.
+Prepare a small paid Render web/API + PostgreSQL deployment after proving portable role ownership, production startup, ingress behavior and demo limits locally. Planning was recorded in PR#11. TF-05a now implements the portable role boundary in a dependent branch; subsequent steps remain planned. Provider choice is a proposal; no resource or bill has been created.
 
 ## Technical context
 
@@ -39,4 +39,4 @@ Post-design: same result. Scope is one modular application and database, no shar
 
 Keep `apps/api`, `apps/web`, `db/migrations`, `scripts`, `tests/integration`, `tests/e2e`. Add deployment build/config, role/quota migrations and an operator script in later implementation PRs. [Runtime contract](contracts/deployment.md) defines secrets and operational boundaries; [data model](data-model.md) describes the proposed additions; [validation guide](quickstart.md) defines evidence.
 
-No tasks are marked implemented in this branch. T012 remains open in the MVP package; issue #6 tracks the sequence above.
+See [executable tasks](tasks.md) for verified implementation progress. T012 remains open in the MVP package; issue #6 tracks the sequence above.

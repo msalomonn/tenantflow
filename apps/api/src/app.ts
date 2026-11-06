@@ -3,6 +3,7 @@ import { Pool, type PoolClient } from 'pg';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { createAuth } from './auth.js';
 import type { Config } from './config.js';
+import { assertDefinerRole } from './database-roles.js';
 import { mountProjectLifecycle } from './projects.js';
 import { mountMembershipRoutes } from './memberships.js';
 
@@ -125,6 +126,7 @@ export function createApplication(config:Config) {
         const v=r.rows[0];
         if(v.name!==expected||v.rolsuper||v.rolbypassrls||v.rolcreatedb||v.rolcreaterole) throw new Error('Unsafe database runtime role');
       }
+      await assertDefinerRole(dataPool);
       const owned=await dataPool.query("SELECT 1 FROM pg_tables WHERE schemaname='app' AND tableowner=current_user");
       if(owned.rowCount) throw new Error('Runtime role must not own tenant tables');
     },
