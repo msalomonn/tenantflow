@@ -27,7 +27,7 @@ Use 401 for no valid session, 404 for resources outside accessible organizations
 
 ## Verification
 
-The full-MVP verification target is real PostgreSQL integration coverage for two users, two organizations and all roles. Attempt every read/write route with a foreign project ID, revoked membership, forged tenant context, pooled connection reuse and concurrent owner changes. The current local source passes 37 integration cases and 20 browser scenarios; see [current evidence and remaining cases](../../docs/verification.md). Use deterministic synthetic fixtures; do not rely solely on mocked repositories.
+The full-MVP verification target is real PostgreSQL integration coverage for two users, two organizations and all roles. Attempt every read/write route with a foreign project ID, revoked membership, forged tenant context, pooled connection reuse and concurrent owner changes. The current local source passes 43 integration cases and 24 browser scenarios; see [current evidence and remaining cases](../../docs/verification.md). Use deterministic synthetic fixtures; do not rely solely on mocked repositories.
 
 ## Dependencies and decisions
 
