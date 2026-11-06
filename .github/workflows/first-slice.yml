@@ -1,4 +1,4 @@
-name: First slice checks
+name: Acceptance checks
 on:
   pull_request:
   push:
@@ -16,10 +16,20 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npm run setup
+      - name: Generate and preserve local credentials
+        run: |
+          npm run setup
+          cp .env .env.before-setup
+          npm run setup
+          cmp .env .env.before-setup
+          rm .env.before-setup
       - run: npm run db:up
-      - run: npm run db:migrate
+      - name: Apply migrations repeatably
+        run: |
+          npm run db:migrate
+          npm run db:migrate
       - run: npx playwright install --with-deps chromium
       - run: npm run check
+      - run: npm run audit
       - if: always()
         run: docker compose stop db
