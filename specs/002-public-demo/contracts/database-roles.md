@@ -1,0 +1,12 @@
+# TF-05a / TF-D02 database role contract
+
+Scope: US1, no provider provisioning. Runtime roles remain tenantflow_app and tenantflow_auth. Migration identity owns schema/tables and requires database ownership plus CREATEROLE/role administration and permission to transfer existing function ownership; it need not be superuser or bypass RLS.
+
+- R01: fresh and legacy001–003 databases migrate twice with a NOSUPERUSER/NOBYPASSRLS migration identity. Legacy data, existing grants and prior checksum rows survive. Legacy function invocation without RLS bypass reproduces the pre-fix failure.
+- R02: four existing SECURITY DEFINER functions are owned by tenantflow_definer, a NOLOGIN/NOINHERIT/NOSUPERUSER/NOBYPASSRLS/NOCREATEDB/NOCREATEROLE/NOREPLICATION role with no membership in other roles. Keep their existing authorization logic, empty search path and PUBLIC execution revocations. No additional exposed function is introduced.
+- R03: grant only schema usage, organization id read/name insert/name update for row locking, membership read/insert/role update/delete, and auth.user id/name/email read. Give explicit role-specific RLS policies for these operations; keep ENABLE/FORCE RLS on every tenant table. Do not grant access to projects, password/account/session data or persistent CREATE privileges.
+- R04: runtime app/auth roles cannot inherit, become or administer the definer role, directly or transitively. Reject unsafe pre-existing definer flags/membership rather than silently repairing or taking over it. Startup rejects runtime membership escalation. Migration owner alone may retain explicitly non-inherited SET/administration rights to maintain the functions.
+- R05: test real signup, atomic bootstrap, member management, last-owner/concurrent mutation, project lifecycle, viewer/foreign denial and direct restricted-role SQL. An invalid actor or failed member insert leaves no partial organization. Verify exact function owner/ACL and absence of unnecessary grants.
+- R06: a migration failure rolls back migration004's role/grant/ownership changes; no success/checksum row is written. Existing migration checksums remain immutable. Test in a separate ephemeral cluster; do not reset the user's local database or alter existing runtime passwords.
+
+Managed provider capabilities and deployed recovery still need their own preflight. Local PostgreSQL compatibility is not a Render deployment claim.

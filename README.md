@@ -2,7 +2,7 @@
 
 A multi-tenant project workspace demonstrating authorization boundaries and organization-scoped data.
 
-**Status:** TF-00–TF-04 merged. TF-05 deployment design is proposed; hosting/budget and public app deployment remain pending. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
+**Status:** TF-00–TF-04 merged. TF-05a portable database roles are implemented in a dependent PR; hosting/budget and public app deployment remain pending. No public deployment yet. Constitution and MVP scope approved on October 25, 2026.
 
 React + TypeScript, Node.js + Express, Better Auth and PostgreSQL with restricted runtime roles and row-level security. The app supports signup/sign-in, organizations, project creation/list/search, tenant switching and owner-managed memberships. Writers can rename/archive projects; owners/admins can rename organizations.
 
@@ -48,12 +48,13 @@ npm run check
 npm run audit
 ```
 
-Stop an existing development server before the browser checks: Playwright owns port 4310 during the run. The checks type-check code, build the web bundle, run real-database integration tests and exercise Chromium at desktop and mobile sizes. Tests create synthetic accounts and organizations in the local database.
+Stop an existing development server before the browser checks: Playwright owns port 4310 during the run. The checks type-check code, build the web bundle, run real-database integration tests and exercise Chromium at desktop and mobile sizes. Tests create synthetic accounts and organizations in the local database. The portability suite also starts and removes its own disposable PostgreSQL container to test a non-superuser migration owner; it does not reset the local volume.
 
-Local results: **43 integration tests and 24 browser scenarios passed**, plus type checking and production web build. [Verification and limits](docs/verification.md) map all MVP acceptance criteria and distinguish local verification from deployment. CI runs the same commands on pull requests; see the PR for its independent result.
+Local results: **43 integration tests, 4 database portability scenarios and 24 browser scenarios passed**, plus type checking and production web build. The portability suite also reran all 43 integration cases against a schema created by a non-superuser migration owner. [Verification and limits](docs/verification.md) map all MVP acceptance criteria and distinguish local verification from deployment. CI runs the same commands on pull requests; see the PR for its independent result.
 
 ## Engineering records
 
+- [Portable database role decision](docs/adr/0006-portable-definer-role.md) and [TF-05a evidence](docs/checkpoints/2026-11-05-portable-roles.md)
 - [TF-05 deployment proposal](docs/deployment-proposal.md) and [release specification](specs/002-public-demo/spec.md)
 - [TF-04 hardening contract](specs/001-tenant-isolation/contracts/hardening.md), [dependency review](docs/dependency-review.md) and [checkpoint](docs/checkpoints/2026-11-05-acceptance-hardening.md)
 - [TF-03 lifecycle contract](specs/001-tenant-isolation/contracts/project-lifecycle.md), [ADR](docs/adr/0004-project-lifecycle.md) and [checkpoint](docs/checkpoints/2026-11-05-project-lifecycle.md)

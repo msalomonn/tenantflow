@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { getMigrations } from 'better-auth/db/migration';
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { assertDefinerRole } from '../apps/api/src/database-roles.js';
 
 function required(name:string) { const v=process.env[name]; if(!v) throw new Error(`Missing ${name}`); return v; }
 const pool = new Pool({connectionString:required('DATABASE_ADMIN_URL')});
@@ -9,6 +10,7 @@ const authMigrationPool = new Pool({connectionString:required('DATABASE_ADMIN_UR
 const client=await pool.connect();
 try {
   await client.query("SELECT pg_advisory_lock(hashtext('tenantflow-migrations'))");
+  await assertDefinerRole(client,false);
   await client.query('CREATE SCHEMA IF NOT EXISTS auth; REVOKE ALL ON SCHEMA auth FROM PUBLIC; REVOKE CREATE ON SCHEMA public FROM PUBLIC;');
   for (const [role,key] of [['tenantflow_app','APP_DB_PASSWORD'],['tenantflow_auth','AUTH_DB_PASSWORD']]) {
     const password=required(key);
@@ -30,6 +32,7 @@ try {
     catch(e) { await client.query('ROLLBACK'); throw e; }
     console.log(`Applied ${name}`);
   }
+  await assertDefinerRole(client);
   console.log('Migrations complete; runtime roles have no schema ownership or DDL privileges.');
 } finally {
   await client.query("SELECT pg_advisory_unlock(hashtext('tenantflow-migrations'))");

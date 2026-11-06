@@ -16,8 +16,9 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --env-file=.env --test --test-concurrency=1 tests/integration/*.test.ts",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run build && npm test && npm run test:e2e",
-    "audit": "npm audit --package-lock-only --audit-level=info --include=dev --include=optional --include=peer"
+    "check": "npm run typecheck && npm run build && npm test && npm run test:portability && npm run test:e2e",
+    "audit": "npm audit --package-lock-only --audit-level=info --include=dev --include=optional --include=peer",
+    "test:portability": "tsx --test --test-concurrency=1 tests/portability/*.test.ts"
   },
   "dependencies": {
     "better-auth": "1.7.13",
